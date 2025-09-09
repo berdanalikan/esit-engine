@@ -50,6 +50,9 @@ class TechnicalSupportAI:
             from search_unified import UnifiedSearcher
             self.searcher = UnifiedSearcher(self.pdf_path)
             print(f"✅ PDF search system initialized for: {Path(self.pdf_path).name}")
+        except ImportError as e:
+            print(f"❌ PDF search initialization failed: Missing dependencies ({e})")
+            self.searcher = None
         except Exception as e:
             print(f"❌ PDF search initialization failed: {e}")
             self.searcher = None

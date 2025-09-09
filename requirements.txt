@@ -12,7 +12,7 @@ python-dotenv
 # PDF Processing (only if needed)
 pypdf
 sentence-transformers
-faiss-cpu
+# faiss-cpu  # Temporarily disabled due to build issues
 
 # Utils
 httpx
