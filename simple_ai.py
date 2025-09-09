@@ -145,3 +145,4 @@ if __name__ == "__main__":
         result = ai.generate_response(query)
         print(f"✅ Kategori: {result.get('category', 'N/A')}")
         print(f"📝 Yanıt: {result['response'][:100]}...")
+

@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import requests
 
 from tech_support_ai import get_tech_support_ai
 
@@ -91,8 +92,43 @@ logging.basicConfig(
 )
 feedback_logger = logging.getLogger('feedback_system')
 
-# Feedback data file path
-FEEDBACK_FILE = Path(__file__).parent / "feedback_data.json"
+# Feedback data file path (allow override via FEEDBACK_DIR for deployments)
+FEEDBACK_FILE = Path(os.getenv("FEEDBACK_DIR", str(Path(__file__).parent))) / "feedback_data.json"
+
+# Supabase config (if provided, we will store/query feedback there)
+# TODO: Replace with your actual Supabase credentials
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "your-anon-key-here")
+
+def supabase_enabled() -> bool:
+    # Check if credentials are properly set (not placeholder values)
+    url_valid = SUPABASE_URL and SUPABASE_URL != "https://your-project.supabase.co" and not SUPABASE_URL.endswith("supabase.co")
+    key_valid = SUPABASE_ANON_KEY and SUPABASE_ANON_KEY != "your-anon-key-here" and len(SUPABASE_ANON_KEY) > 20
+    return bool(url_valid and key_valid)
+
+def supabase_headers() -> dict:
+    return {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "Content-Type": "application/json",
+    }
+
+def supabase_insert_feedback(entry: dict) -> dict:
+    url = f"{SUPABASE_URL}/rest/v1/feedback"
+    resp = requests.post(url, headers=supabase_headers(), json=entry, params={"select": "*"}, timeout=15)
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=500, detail=f"Supabase insert failed: {resp.text}")
+    return resp.json() if resp.text else {}
+
+def supabase_fetch_feedback(select: str = "*", query: dict | None = None) -> list:
+    url = f"{SUPABASE_URL}/rest/v1/feedback"
+    params = {"select": select}
+    if query:
+        params.update(query)
+    resp = requests.get(url, headers=supabase_headers(), params=params, timeout=20)
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=500, detail=f"Supabase fetch failed: {resp.text}")
+    return resp.json() if resp.text else []
 
 # Load existing feedback data
 def load_feedback_data():
@@ -124,6 +160,12 @@ def save_feedback_data(data):
 
 # Initialize feedback data
 feedback_data = load_feedback_data()
+
+# Debug Supabase configuration at startup
+feedback_logger.info(f"🔧 STARTUP DEBUG:")
+feedback_logger.info(f"   SUPABASE_URL: {SUPABASE_URL[:50]}..." if SUPABASE_URL else "   SUPABASE_URL: None")
+feedback_logger.info(f"   SUPABASE_ANON_KEY length: {len(SUPABASE_ANON_KEY) if SUPABASE_ANON_KEY else 0}")
+feedback_logger.info(f"   Supabase enabled: {supabase_enabled()}")
 
 @app.get("/")
 async def root():
@@ -1929,8 +1971,28 @@ async def submit_feedback(request: FeedbackRequest):
             "user_agent": request.headers.get("user-agent", "unknown") if hasattr(request, 'headers') else "unknown"
         }
         
-        feedback_data.append(feedback_entry)
+        # Debug logging
+        feedback_logger.info(f"🔍 DEBUG - Feedback submission:")
+        feedback_logger.info(f"   Supabase enabled: {supabase_enabled()}")
+        feedback_logger.info(f"   SUPABASE_URL: {SUPABASE_URL[:50]}..." if SUPABASE_URL else "None")
+        feedback_logger.info(f"   SUPABASE_ANON_KEY: {'***' + SUPABASE_ANON_KEY[-10:] if SUPABASE_ANON_KEY else 'None'}")
         
+        # Prefer Supabase if configured
+        if supabase_enabled():
+            try:
+                result = supabase_insert_feedback(feedback_entry)
+                feedback_logger.info(f"✅ Supabase insert successful: {result}")
+            except Exception as supabase_error:
+                feedback_logger.error(f"❌ Supabase insert failed: {supabase_error}")
+                # Fallback to local storage
+                feedback_data.append(feedback_entry)
+                save_feedback_data(feedback_data)
+                feedback_logger.info("📁 Saved to local JSON as fallback")
+        else:
+            feedback_data.append(feedback_entry)
+            save_feedback_data(feedback_data)
+            feedback_logger.info("📁 Saved to local JSON (Supabase not enabled)")
+
         # Log the feedback submission
         feedback_logger.info(f"📝 New feedback received:")
         feedback_logger.info(f"   Type: {request.feedback_type}")
@@ -1940,16 +2002,17 @@ async def submit_feedback(request: FeedbackRequest):
         if request.reason:
             feedback_logger.info(f"   Reason: {request.reason}")
         
-        # Save to file for persistence
-        if save_feedback_data(feedback_data):
-            feedback_logger.info(f"✅ Feedback saved successfully (Total: {len(feedback_data)})")
-        else:
-            feedback_logger.error("❌ Failed to save feedback to file")
+        # Stats
         
-        # Log statistics
-        total = len(feedback_data)
-        positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
-        negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
+        if supabase_enabled():
+            rows = supabase_fetch_feedback(select="feedback_type")
+            total = len(rows)
+            positive = sum(1 for r in rows if r.get("feedback_type") == "positive")
+            negative = sum(1 for r in rows if r.get("feedback_type") == "negative")
+        else:
+            total = len(feedback_data)
+            positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
+            negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
         satisfaction = (positive / total * 100) if total > 0 else 0
         
         feedback_logger.info(f"📊 Current Stats: {positive}👍 {negative}👎 ({satisfaction:.1f}% satisfaction)")
@@ -1967,23 +2030,26 @@ async def get_feedback_analysis():
         import json
         from collections import Counter
         
-        if not feedback_data:
-            return {
-                "total_feedback": 0,
-                "positive_count": 0,
-                "negative_count": 0,
-                "satisfaction_rate": 0,
-                "suggestions": []
-            }
-        
-        # Calculate basic stats
-        total = len(feedback_data)
-        positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
-        negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
+        if supabase_enabled():
+            rows = supabase_fetch_feedback(select="feedback_type,bot_response")
+            total = len(rows)
+            positive = sum(1 for r in rows if r.get("feedback_type") == "positive")
+            negative = sum(1 for r in rows if r.get("feedback_type") == "negative")
+            negative_responses = [ (r.get("bot_response") or "")[:100] for r in rows if r.get("feedback_type") == "negative" ]
+        else:
+            if not feedback_data:
+                return {
+                    "total_feedback": 0,
+                    "positive_count": 0,
+                    "negative_count": 0,
+                    "satisfaction_rate": 0,
+                    "suggestions": []
+                }
+            total = len(feedback_data)
+            positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
+            negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
+            negative_responses = [f["bot_response"][:100] for f in feedback_data if f["feedback_type"] == "negative"]
         satisfaction_rate = (positive / total * 100) if total > 0 else 0
-        
-        # Analyze negative feedback patterns
-        negative_responses = [f["bot_response"][:100] for f in feedback_data if f["feedback_type"] == "negative"]
         
         # Generate improvement suggestions
         suggestions = []
@@ -2017,24 +2083,35 @@ async def get_daily_feedback_report():
         
         # Get today's feedback
         today = datetime.now().date()
-        today_feedback = []
-        
-        for feedback in feedback_data:
-            try:
-                feedback_date = datetime.fromisoformat(feedback.get("created_at", feedback.get("timestamp", ""))).date()
-                if feedback_date == today:
-                    today_feedback.append(feedback)
-            except:
-                continue
-        
-        # Calculate daily stats
-        total_today = len(today_feedback)
-        positive_today = sum(1 for f in today_feedback if f["feedback_type"] == "positive")
-        negative_today = sum(1 for f in today_feedback if f["feedback_type"] == "negative")
+        if supabase_enabled():
+            start = f"{today.isoformat()}T00:00:00Z"
+            # basitçe created_at >= start filtrasyonu, üst sınır olmadan da çoğu durumda yeterli
+            rows = supabase_fetch_feedback(select="feedback_type,user_message,bot_response,created_at", query={"created_at": f"gte.{start}"})
+            total_today = len(rows)
+            positive_today = sum(1 for r in rows if r.get("feedback_type") == "positive")
+            negative_today = sum(1 for r in rows if r.get("feedback_type") == "negative")
+            recent_negative = [r for r in rows if r.get("feedback_type") == "negative"][-5:]
+            overall_rows = supabase_fetch_feedback(select="feedback_type")
+            overall_total = len(overall_rows)
+            overall_pos = sum(1 for r in overall_rows if r.get("feedback_type") == "positive")
+            overall_neg = sum(1 for r in overall_rows if r.get("feedback_type") == "negative")
+        else:
+            today_feedback = []
+            for feedback in feedback_data:
+                try:
+                    feedback_date = datetime.fromisoformat(feedback.get("created_at", feedback.get("timestamp", ""))).date()
+                    if feedback_date == today:
+                        today_feedback.append(feedback)
+                except:
+                    continue
+            total_today = len(today_feedback)
+            positive_today = sum(1 for f in today_feedback if f["feedback_type"] == "positive")
+            negative_today = sum(1 for f in today_feedback if f["feedback_type"] == "negative")
+            recent_negative = [f for f in today_feedback if f["feedback_type"] == "negative"][-5:]
+            overall_total = len(feedback_data)
+            overall_pos = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
+            overall_neg = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
         satisfaction_today = (positive_today / total_today * 100) if total_today > 0 else 0
-        
-        # Get recent negative feedback for analysis
-        recent_negative = [f for f in today_feedback if f["feedback_type"] == "negative"][-5:]
         
         report = {
             "date": today.isoformat(),
@@ -2046,16 +2123,16 @@ async def get_daily_feedback_report():
             },
             "recent_negative_samples": [
                 {
-                    "user_message": f["user_message"][:100],
-                    "bot_response": f["bot_response"][:100],
+                    "user_message": (f.get("user_message") or "")[:100],
+                    "bot_response": (f.get("bot_response") or "")[:100],
                     "timestamp": f.get("created_at", f.get("timestamp"))
                 }
                 for f in recent_negative
             ],
             "overall_stats": {
-                "total_all_time": len(feedback_data),
-                "positive_all_time": sum(1 for f in feedback_data if f["feedback_type"] == "positive"),
-                "negative_all_time": sum(1 for f in feedback_data if f["feedback_type"] == "negative")
+                "total_all_time": overall_total,
+                "positive_all_time": overall_pos,
+                "negative_all_time": overall_neg
             }
         }
         
@@ -2088,8 +2165,73 @@ async def health():
     return {
         "status": "ok",
         "system": "ESİT Technical Support AI",
-        "pdf_available": Path(PDF_PATH).exists()
+        "pdf_available": Path(PDF_PATH).exists(),
+        "supabase_enabled": supabase_enabled()
     }
+
+@app.get("/test-supabase")
+async def test_supabase():
+    """Test Supabase connection"""
+    try:
+        debug_info = {
+            "supabase_url": SUPABASE_URL[:50] + "..." if SUPABASE_URL else "None",
+            "supabase_key_set": bool(SUPABASE_ANON_KEY),
+            "supabase_key_length": len(SUPABASE_ANON_KEY) if SUPABASE_ANON_KEY else 0,
+            "supabase_enabled": supabase_enabled()
+        }
+        
+        if not supabase_enabled():
+            return {
+                "status": "error", 
+                "message": "Supabase credentials not configured properly",
+                "debug": debug_info
+            }
+        
+        # Test connection by trying to fetch feedback
+        result = supabase_fetch_feedback(select="id", query={"limit": "1"})
+        return {
+            "status": "success", 
+            "message": "Supabase connection successful",
+            "sample_count": len(result),
+            "debug": debug_info
+        }
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Supabase connection failed: {str(e)}",
+            "debug": debug_info if 'debug_info' in locals() else {}
+        }
+
+@app.post("/migrate-feedback-to-supabase")
+async def migrate_feedback_to_supabase():
+    """Migrate existing local feedback data to Supabase"""
+    try:
+        if not supabase_enabled():
+            return {"status": "error", "message": "Supabase credentials not configured"}
+        
+        if not feedback_data:
+            return {"status": "info", "message": "No local feedback data to migrate"}
+        
+        migrated_count = 0
+        errors = []
+        
+        for entry in feedback_data:
+            try:
+                supabase_insert_feedback(entry)
+                migrated_count += 1
+            except Exception as e:
+                errors.append(f"Failed to migrate entry {entry.get('message_id', 'unknown')}: {str(e)}")
+        
+        return {
+            "status": "success" if not errors else "partial_success",
+            "message": f"Migrated {migrated_count}/{len(feedback_data)} feedback entries",
+            "migrated_count": migrated_count,
+            "total_count": len(feedback_data),
+            "errors": errors[:5]  # Show first 5 errors
+        }
+        
+    except Exception as e:
+        return {"status": "error", "message": f"Migration failed: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VCS
+.git
+.gitignore
+
+# Local env
+.venv/
+.env
+
+# Large assets (not needed in image)
+Esit_*_images/
+Esit_*_tables/
+*faiss*/
+*faiss_images*/
+*faiss_tables*/
+*.faiss
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
