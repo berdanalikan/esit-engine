@@ -22,31 +22,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Startup event for feedback system
-@app.on_event("startup")
-async def startup_event():
-    """Initialize feedback system on startup"""
-    feedback_logger.info("🚀 ESİT Technical Support AI starting up...")
-    feedback_logger.info(f"📊 Loaded feedback system with {len(feedback_data)} existing entries")
-    
-    if len(feedback_data) > 0:
-        total = len(feedback_data)
-        positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
-        negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
-        satisfaction = (positive / total * 100) if total > 0 else 0
-        feedback_logger.info(f"📈 Historical Stats: {positive}👍 {negative}👎 ({satisfaction:.1f}% satisfaction)")
-    
-    feedback_logger.info("✅ Feedback system ready")
+# Startup event for feedback system (disabled for Vercel serverless)
+# @app.on_event("startup")
+# async def startup_event():
+#     """Initialize feedback system on startup"""
+#     feedback_logger.info("🚀 ESİT Technical Support AI starting up...")
+#     feedback_logger.info(f"📊 Loaded feedback system with {len(feedback_data)} existing entries")
+#     
+#     if len(feedback_data) > 0:
+#         total = len(feedback_data)
+#         positive = sum(1 for f in feedback_data if f["feedback_type"] == "positive")
+#         negative = sum(1 for f in feedback_data if f["feedback_type"] == "negative")
+#         satisfaction = (positive / total * 100) if total > 0 else 0
+#         feedback_logger.info(f"📈 Historical Stats: {positive}👍 {negative}👎 ({satisfaction:.1f}% satisfaction)")
+#     
+#     feedback_logger.info("✅ Feedback system ready")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    feedback_logger.info("🛑 ESİT Technical Support AI shutting down...")
-    if save_feedback_data(feedback_data):
-        feedback_logger.info("💾 Final feedback data saved successfully")
-    else:
-        feedback_logger.error("❌ Failed to save final feedback data")
-    feedback_logger.info("👋 Shutdown complete")
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     """Cleanup on shutdown"""
+#     feedback_logger.info("🛑 ESİT Technical Support AI shutting down...")
+#     if save_feedback_data(feedback_data):
+#         feedback_logger.info("💾 Final feedback data saved successfully")
+#     else:
+#         feedback_logger.error("❌ Failed to save final feedback data")
+#     feedback_logger.info("👋 Shutdown complete")
 
 # CORS middleware
 app.add_middleware(
@@ -2246,10 +2246,6 @@ async def migrate_feedback_to_supabase():
         
     except Exception as e:
         return {"status": "error", "message": f"Migration failed: {str(e)}"}
-
-# For Vercel deployment
-def handler(request):
-    return app
 
 if __name__ == "__main__":
     import uvicorn
