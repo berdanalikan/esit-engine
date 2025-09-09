@@ -1,9 +1,9 @@
 # ESİT Technical Support AI Tool - Minimal Dependencies
 
 # Web Framework
-fastapi
-uvicorn[standard]
-gunicorn
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+# gunicorn  # Not needed for Vercel
 
 # AI & OpenAI
 openai

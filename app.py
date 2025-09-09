@@ -2247,6 +2247,10 @@ async def migrate_feedback_to_supabase():
     except Exception as e:
         return {"status": "error", "message": f"Migration failed: {str(e)}"}
 
+# For Vercel deployment
+def handler(request):
+    return app
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
