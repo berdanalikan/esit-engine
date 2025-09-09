@@ -73,17 +73,6 @@ class FeedbackRequest(BaseModel):
     timestamp: str
     reason: Optional[str] = None  # Negative feedback reason
 
-# PDF path
-PDF_PATH = str(Path.cwd() / "Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf")
-
-# Validate PDF exists at startup
-if not Path(PDF_PATH).exists():
-    feedback_logger.warning(f"⚠️ PDF file not found at: {PDF_PATH}")
-    feedback_logger.info(f"📁 Current working directory: {Path.cwd()}")
-    feedback_logger.info(f"📁 Available PDF files: {list(Path.cwd().glob('*.pdf'))}")
-else:
-    feedback_logger.info(f"✅ PDF file found: {PDF_PATH}")
-
 # Feedback storage
 import json
 import logging
@@ -99,6 +88,17 @@ logging.basicConfig(
     ]
 )
 feedback_logger = logging.getLogger('feedback_system')
+
+# PDF path
+PDF_PATH = str(Path.cwd() / "Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf")
+
+# Validate PDF exists at startup
+if not Path(PDF_PATH).exists():
+    feedback_logger.warning(f"⚠️ PDF file not found at: {PDF_PATH}")
+    feedback_logger.info(f"📁 Current working directory: {Path.cwd()}")
+    feedback_logger.info(f"📁 Available PDF files: {list(Path.cwd().glob('*.pdf'))}")
+else:
+    feedback_logger.info(f"✅ PDF file found: {PDF_PATH}")
 
 # Feedback data file path (allow override via FEEDBACK_DIR for deployments)
 FEEDBACK_FILE = Path(os.getenv("FEEDBACK_DIR", str(Path(__file__).parent))) / "feedback_data.json"
