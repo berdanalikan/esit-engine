@@ -76,6 +76,14 @@ class FeedbackRequest(BaseModel):
 # PDF path
 PDF_PATH = str(Path.cwd() / "Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf")
 
+# Validate PDF exists at startup
+if not Path(PDF_PATH).exists():
+    feedback_logger.warning(f"⚠️ PDF file not found at: {PDF_PATH}")
+    feedback_logger.info(f"📁 Current working directory: {Path.cwd()}")
+    feedback_logger.info(f"📁 Available PDF files: {list(Path.cwd().glob('*.pdf'))}")
+else:
+    feedback_logger.info(f"✅ PDF file found: {PDF_PATH}")
+
 # Feedback storage
 import json
 import logging
@@ -2235,4 +2243,6 @@ async def migrate_feedback_to_supabase():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    host = "0.0.0.0" if os.getenv("PORT") else "127.0.0.1"
+    uvicorn.run(app, host=host, port=port)
