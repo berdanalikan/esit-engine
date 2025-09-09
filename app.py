@@ -110,8 +110,15 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "your-anon-key-here")
 
 def supabase_enabled() -> bool:
     # Check if credentials are properly set (not placeholder values)
-    url_valid = SUPABASE_URL and SUPABASE_URL != "https://your-project.supabase.co" and not SUPABASE_URL.endswith("supabase.co")
-    key_valid = SUPABASE_ANON_KEY and SUPABASE_ANON_KEY != "your-anon-key-here" and len(SUPABASE_ANON_KEY) > 20
+    url_valid = (SUPABASE_URL and 
+                 SUPABASE_URL != "https://your-project.supabase.co" and 
+                 SUPABASE_URL.startswith("https://") and 
+                 ".supabase.co" in SUPABASE_URL)
+    key_valid = (SUPABASE_ANON_KEY and 
+                 SUPABASE_ANON_KEY != "your-anon-key-here" and 
+                 len(SUPABASE_ANON_KEY) > 100)  # JWT tokens are long
+    
+    feedback_logger.debug(f"🔍 Supabase validation: url_valid={url_valid}, key_valid={key_valid}")
     return bool(url_valid and key_valid)
 
 def supabase_headers() -> dict:
