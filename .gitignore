@@ -1,0 +1,23 @@
+.env
+# Sensitive/runtime files
+.env
+__pycache__/
+*.pyc
+feedback_data.json
+feedback.log
+
+# Heavy generated indices and assets
+*.faiss
+*faiss*/
+*faiss_images*/
+*faiss_tables*/
+Esit_*_images/
+Esit_*_tables/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Virtual env
+.venv/

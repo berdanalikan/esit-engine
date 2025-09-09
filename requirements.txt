@@ -1,0 +1,16 @@
+# ESİT Technical Support AI Tool - Minimal Dependencies
+
+# Web Framework
+fastapi
+uvicorn[standard]
+
+# AI & OpenAI
+openai
+python-dotenv
+
+# PDF Processing (only if needed)
+pypdf
+sentence-transformers
+
+# Utils
+httpx

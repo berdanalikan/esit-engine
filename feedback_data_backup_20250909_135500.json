@@ -1,0 +1,21 @@
+[
+  {
+    "message_id": "msg_1757413453343_ichzkplio",
+    "feedback_type": "negative",
+    "user_message": "merhaba, nasıl kalibrasyon yaparım?",
+    "bot_response": "Merhaba! ECI ürününüzün kalibrasyonunu yapmak için aşağıdaki adımları izleyebilirsiniz:\n\n1. **Cihazı Hazırlayın**: Kalibrasyon yapmadan önce cihazın düzgün çalıştığından emin olun. Cihazı açın ve gerekli tüm bağlantıları kontrol edin.\n\n2. **Kalibrasyon Moduna Geçin**: Cihazın menüsünden kalibrasyon moduna geçiş yapın. Bu genellikle \"Ayarlar\" veya \"Kalibrasyon\" sekmesinde bulunur.\n\n3. **Referans Değerleri Belirleyin**: Kalibrasyon için kullanacağınız referans değerleri belirleyin. Bu değerler, cihazın doğru ölçüm yapabilmesi için gereklidir.\n\n4. **Kalibrasyon Sürecini Başlatın**: Ekranda görünen talimatları takip ederek kalibrasyon sürecini başlatın. Cihaz, belirli bir süre boyunca referans değerleri ile karşılaştırma yapacaktır.\n\n5. **Verileri Gözlemleyin**: Kalibrasyon sırasında cihazın gösterdiği değerleri dikkatlice gözlemleyin. Eğer değerler beklenen aralıkta değilse, ayarlamalar yapmanız gerekebilir.\n\n6. **Kalibrasyonu Tamamlayın**: Kalibrasyon işlemi tamamlandığında, cihazın ayarlarını kaydedin ve çıkış yapın. Cihazı kapatıp açarak kalibrasyonun başarılı olup olmadığını kontrol edin.\n\n7. **Test Yapın**: Kalibrasyon sonrası cihazı test edin. Gerçek ölçümler alarak cihazın doğru çalışıp çalışmadığını kontrol edin.\n\nBu adımları takip ederek ECI ürününüzü kalibre edebilirsiniz. Herhangi bir sorunla karşılaşırsanız, lütfen belirtin, daha fazla yardımcı olayım!",
+    "timestamp": "2025-09-09T10:24:52.057Z",
+    "created_at": "2025-09-09T13:24:52.062652"
+  },
+  {
+    "message_id": "msg_1757414985874_wyi4h7l2f",
+    "feedback_type": "positive",
+    "user_message": "merhaba",
+    "bot_response": "Merhaba! Size nasıl yardımcı olabilirim? ECI ürünleriyle ilgili bir sorunuz varsa, lütfen belirtin.",
+    "timestamp": "2025-09-09T10:49:49.276Z",
+    "reason": null,
+    "created_at": "2025-09-09T13:49:49.300470",
+    "server_timestamp": "2025-09-09T13:49:49.300534",
+    "user_agent": "unknown"
+  }
+]
