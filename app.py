@@ -118,7 +118,6 @@ def supabase_enabled() -> bool:
                  SUPABASE_ANON_KEY != "your-anon-key-here" and 
                  len(SUPABASE_ANON_KEY) > 100)  # JWT tokens are long
     
-    feedback_logger.debug(f"🔍 Supabase validation: url_valid={url_valid}, key_valid={key_valid}")
     return bool(url_valid and key_valid)
 
 def supabase_headers() -> dict:
