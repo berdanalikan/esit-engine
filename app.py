@@ -211,11 +211,19 @@ async def root():
             box-sizing: border-box;
         }
         
+        :root {
+            --vh: 1vh;
+            --header-h: 70px;
+            --input-h: 92px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0d1117;
             color: #e6edf3;
-            height: 100vh;
+            height: calc(var(--vh) * 100);
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -239,7 +247,7 @@ async def root():
         
         .app-container {
             display: flex;
-            height: 100vh;
+            height: calc(var(--vh) * 100);
         }
         
         /* Hamburger Menu Button */
@@ -537,7 +545,9 @@ async def root():
             align-items: center;
             transition: justify-content 0.6s ease-out;
             scroll-behavior: smooth;
-            max-height: calc(100vh - 140px);
+            max-height: calc(var(--vh) * 100 - var(--header-h) - var(--input-h) - var(--safe-bottom));
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
         
         .messages.chat-started {
@@ -925,6 +935,7 @@ async def root():
             position: sticky;
             bottom: 0;
             z-index: 50;
+            padding-bottom: calc(16px + var(--safe-bottom));
         }
         
         .input-note {
@@ -1101,7 +1112,7 @@ async def root():
             
             .messages {
                 padding: 8px;
-                max-height: calc(100vh - 180px);
+                max-height: calc(var(--vh) * 100 - 180px - var(--safe-bottom));
             }
             
             .message {
@@ -1500,6 +1511,15 @@ async def root():
         let selectedCategory = 'ECI';
         let ttsEnabled = false;
         
+        // Mobile viewport height fix (100vh issue on iOS/Android)
+        function setViewportHeightVar() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        setViewportHeightVar();
+        window.addEventListener('resize', setViewportHeightVar);
+        window.addEventListener('orientationchange', setViewportHeightVar);
+        
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
@@ -1521,7 +1541,10 @@ async def root():
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
         
-        messageInput.focus();
+        // Avoid auto-focus on mobile to prevent keyboard pop
+        if (window.innerWidth > 768) {
+            messageInput.focus();
+        }
         
         function selectCategory(category) {
             selectedCategory = category;
@@ -1799,6 +1822,13 @@ async def root():
                     if (false && ttsEnabled && data.response) {
                         playTTS(data.response);
                     }
+                    // Scroll to bottom after content/images render
+                    setTimeout(() => {
+                        messagesContainer.scrollTo({
+                            top: messagesContainer.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
                 } else {
                     addMessage('bot', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
                 }
@@ -1888,7 +1918,7 @@ async def root():
                     top: messagesContainer.scrollHeight,
                     behavior: 'smooth'
                 });
-            }, 100);
+            }, 50);
         }
         
         function setLoading(loading) {
