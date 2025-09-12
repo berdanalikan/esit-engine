@@ -2250,5 +2250,5 @@ async def migrate_feedback_to_supabase():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    host = "0.0.0.0" if os.getenv("PORT") else "127.0.0.1"
-    uvicorn.run(app, host=host, port=port)
+    host = "0.0.0.0"  # Always bind to all interfaces for deployment
+    uvicorn.run(app, host=host, port=port, log_level="info")

@@ -1,18 +1,24 @@
-# ESİT Technical Support AI Tool - Minimal Dependencies
+# ESİT Technical Support AI Tool - Production Dependencies
 
 # Web Framework
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
-# gunicorn  # Not needed for Vercel
 
 # AI & OpenAI
-openai
-python-dotenv
+openai>=1.0.0
+python-dotenv>=1.0.0
 
-# PDF Processing (only if needed)
-pypdf
-sentence-transformers
-# faiss-cpu  # Temporarily disabled due to build issues
+# PDF Processing
+pypdf>=3.0.0
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+PyMuPDF>=1.23.0
+pdfplumber>=0.9.0
+Pillow>=10.0.0
+
+# Supabase
+supabase>=2.0.0
 
 # Utils
-httpx
+httpx>=0.25.0
+numpy>=1.24.0
