@@ -126,10 +126,25 @@ class TechnicalSupportAI:
                     if markdown.strip():
                         context_parts.append(f"[Tablo - Sayfa {page}] {markdown}")
             
+            # Process image results
+            image_references = []
+            if "by_modality" in results and "images" in results["by_modality"]:
+                for item in results["by_modality"]["images"][:2]:
+                    page = item.get("page", "N/A")
+                    path = item.get("path", "")
+                    score = item.get("score", 0)
+                    if path and score > 0.3:  # Only include relevant images
+                        image_references.append(f"[Görsel - Sayfa {page}]")
+            
+            # Add image references to context
+            if image_references:
+                context_parts.append(f"İlgili görseller: {', '.join(image_references)}")
+            
             return {
                 "context": "\n\n".join(context_parts),
                 "total_results": len(context_parts),
-                "raw_results": results
+                "raw_results": results,
+                "image_references": image_references
             }
             
         except Exception as e:
@@ -156,8 +171,8 @@ class TechnicalSupportAI:
         # Model zaten fine-tuned olduğu için PDF araması opsiyonel
         search_results = {"context": "", "total_results": 0}
         
-        # Sadece karmaşık teknik sorular için PDF arama yap
-        if classification["has_problem"] and classification["primary_category"] in ["calibration", "installation", "maintenance"]:
+        # Teknik sorular için PDF arama yap (görsel arama dahil)
+        if classification["has_problem"] and classification["primary_category"] in ["calibration", "installation", "maintenance", "display", "connection"]:
             search_results = self.search_manual(user_input)
         
         # Build context for AI
@@ -226,15 +241,19 @@ GÖREV:
 
         if has_manual_info:
             # Fine-tuned model için ek bağlam
+            image_info = ""
+            if "image_references" in search_results and search_results["image_references"]:
+                image_info = f"\nİlgili Görseller: {', '.join(search_results['image_references'])}"
+            
             prompt = f"""{base_prompt}
 
 TEKNIK BAĞLAM:
-{context}
+{context}{image_info}
 
 Problem Kategorisi: {classification.get('primary_category', 'genel')}
 Soru Türü: {'Nasıl yapılır' if classification.get('is_howto') else 'Sorun çözme'}
 
-Bu teknik bilgileri kullanarak kesin ve somut çözüm ver."""
+Bu teknik bilgileri ve görselleri kullanarak kesin ve somut çözüm ver. Görsel referansları varsa kullanıcıya hangi sayfadaki görsellere bakabileceğini belirt."""
         else:
             # Fine-tuned model kendi bilgisini kullanabilir
             prompt = f"""{base_prompt}
