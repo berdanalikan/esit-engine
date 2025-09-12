@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import requests
 
@@ -99,6 +100,15 @@ if not Path(PDF_PATH).exists():
     feedback_logger.info(f"📁 Available PDF files: {list(Path.cwd().glob('*.pdf'))}")
 else:
     feedback_logger.info(f"✅ PDF file found: {PDF_PATH}")
+
+# Images directory (processed from PDF)
+IMAGES_DIR = Path(PDF_PATH).with_suffix("").as_posix() + "_images"
+if Path(IMAGES_DIR).exists():
+    # Serve extracted images under /images
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
+    feedback_logger.info(f"🖼️ Serving images from: {IMAGES_DIR} at /images")
+else:
+    feedback_logger.warning(f"🖼️ Images directory not found: {IMAGES_DIR}")
 
 # Feedback data file path (allow override via FEEDBACK_DIR for deployments)
 FEEDBACK_FILE = Path(os.getenv("FEEDBACK_DIR", str(Path(__file__).parent))) / "feedback_data.json"
@@ -1780,7 +1790,7 @@ async def root():
                 
                 if (data.success) {
                     const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    addMessage('bot', data.response, messageId);
+                    addMessage('bot', data.response, messageId, data.image_urls || []);
                     
                     // Store last user message for feedback
                     window.lastUserMessage = message;
@@ -1800,7 +1810,7 @@ async def root():
             }
         }
         
-        function addMessage(sender, text, messageId = null) {
+        function addMessage(sender, text, messageId = null, imageUrls = []) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             if (messageId) messageDiv.dataset.messageId = messageId;
@@ -1821,6 +1831,27 @@ async def root():
             content.textContent = text;
             
             contentWrapper.appendChild(content);
+
+            // Render images under bot messages
+            if (sender === 'bot' && Array.isArray(imageUrls) && imageUrls.length > 0) {
+                const imagesContainer = document.createElement('div');
+                imagesContainer.style.display = 'flex';
+                imagesContainer.style.flexWrap = 'wrap';
+                imagesContainer.style.gap = '8px';
+                imagesContainer.style.marginTop = '8px';
+                imageUrls.slice(0, 3).forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'İlgili görsel';
+                    img.style.maxWidth = '160px';
+                    img.style.maxHeight = '120px';
+                    img.style.border = '1px solid #30363d';
+                    img.style.borderRadius = '6px';
+                    img.loading = 'lazy';
+                    imagesContainer.appendChild(img);
+                });
+                contentWrapper.appendChild(imagesContainer);
+            }
             
             // Add feedback buttons for bot messages under the bubble
             if (sender === 'bot' && messageId) {
@@ -1924,6 +1955,10 @@ async def chat(request: ChatRequest):
         
         # Generate response
         result = ai.generate_response(request.message)
+        
+        # Ensure image_urls always present for frontend simplicity
+        if "image_urls" not in result:
+            result["image_urls"] = []
         
         return result
         

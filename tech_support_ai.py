@@ -140,11 +140,26 @@ class TechnicalSupportAI:
             if image_references:
                 context_parts.append(f"İlgili görseller: {', '.join(image_references)}")
             
+            # Build image URLs for frontend if paths exist
+            image_urls = []
+            try:
+                if "by_modality" in results and "images" in results["by_modality"]:
+                    for item in results["by_modality"]["images"][:3]:
+                        path = item.get("path", "")
+                        score = item.get("score", 0)
+                        if path and score > 0.3:
+                            # Path format: /.../<pdf>_images/pageX_imgY.ext → expose as /images/filename
+                            filename = Path(path).name
+                            image_urls.append(f"/images/{filename}")
+            except Exception:
+                pass
+
             return {
                 "context": "\n\n".join(context_parts),
                 "total_results": len(context_parts),
                 "raw_results": results,
-                "image_references": image_references
+                "image_references": image_references,
+                "image_urls": image_urls
             }
             
         except Exception as e:
