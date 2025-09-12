@@ -199,12 +199,24 @@ class TechnicalSupportAI:
         
         try:
             # Fine-tuned model için optimize edilmiş parametreler
+            # Derin hafıza: Son 8 mesajı bağlama dahil et
+            history_messages = []
+            if self.conversation_history:
+                # Sadece son N mesajı al (token güvenliği için)
+                for m in self.conversation_history[-8:]:
+                    # İçeriği aşırı uzunsa kısalt
+                    content = m.get("content", "")
+                    if isinstance(content, str) and len(content) > 1200:
+                        content = content[:1200] + " …"
+                    history_messages.append({"role": m.get("role", "user"), "content": content})
+
+            messages = [{"role": "system", "content": system_prompt}] + history_messages + [
+                {"role": "user", "content": user_input}
+            ]
+
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",  # Fine-tuned model ID'niz varsa burayı değiştirin
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ],
+                messages=messages,
                 temperature=0.1,  # Fine-tuned model için daha düşük
                 max_tokens=800,   # Daha odaklı yanıtlar
                 top_p=0.9,        # Daha deterministik
