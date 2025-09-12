@@ -1,4 +1,4 @@
-# Use lightweight Python base
+# Minimal Dockerfile for Render deployment
 FROM python:3.12-slim
 
 # Prevent Python from buffering stdout/stderr
@@ -8,21 +8,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Workdir
 WORKDIR /app
 
-# System deps for PDF processing
+# Install only essential system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    build-essential \
     && rm -rf /var/lib/apt/lists/*
-
-# Install additional packages separately to avoid conflicts
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/* || true
 
 # Copy requirements first for layer caching
 COPY requirements.txt ./
@@ -44,5 +33,4 @@ EXPOSE 8080
 
 # Start with python (app.py starts uvicorn)
 ENV PORT=8080
-CMD ["python", "app.py"]
-
+CMD ["python", "start_render.py"]

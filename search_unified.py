@@ -4,15 +4,27 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple
 
 import numpy as np
-import faiss
 from PIL import Image
 from sentence_transformers import SentenceTransformer
+
+# Try to import faiss, fallback to simple search if not available
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    print("⚠️ FAISS not available, using simple search fallback")
 
 
 class ModalityIndex:
     def __init__(self, index_dir: str):
         self.index_dir = index_dir
-        self.index = faiss.read_index(os.path.join(index_dir, "index.faiss"))
+        if FAISS_AVAILABLE:
+            self.index = faiss.read_index(os.path.join(index_dir, "index.faiss"))
+        else:
+            self.index = None
+            print(f"⚠️ FAISS index not available for {index_dir}")
+        
         with open(os.path.join(index_dir, "meta.json"), "r", encoding="utf-8") as f:
             meta = json.load(f)
         if "items" in meta:
@@ -55,6 +67,9 @@ class UnifiedSearcher:
         return s
 
     def search(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+        if not FAISS_AVAILABLE:
+            return self._simple_search(query, top_k)
+        
         q_text_vec = self.text_model.encode([query], convert_to_numpy=True).astype("float32")
         q_clip_vec = self.clip_model.encode([query], convert_to_numpy=True).astype("float32")
 
@@ -93,6 +108,27 @@ class UnifiedSearcher:
         fused_pages = sorted([{"page": p, "score": sc} for p, sc in page_scores.items()], key=lambda x: x["score"], reverse=True)[:top_k]
 
         return {"by_modality": results, "by_page": fused_pages, "weights": {"text": self.w_text, "tables": self.w_tables, "images": self.w_images}}
+    
+    def _simple_search(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+        """Simple text-based search fallback when FAISS is not available"""
+        query_lower = query.lower()
+        results = {"text": [], "tables": [], "images": []}
+        
+        # Simple text search
+        for i, item in enumerate(self.text_idx["items"]):
+            text = item.get("text", "").lower()
+            if query_lower in text:
+                score = text.count(query_lower) / len(text.split())  # Simple scoring
+                results["text"].append({
+                    "score": score,
+                    "page": item.get("page", -1),
+                    "text": item.get("text", "")
+                })
+        
+        # Sort by score and limit
+        results["text"] = sorted(results["text"], key=lambda x: x["score"], reverse=True)[:top_k]
+        
+        return {"by_modality": results, "by_page": [], "weights": {"text": 1.0, "tables": 1.0, "images": 1.0}}
 
 
 if __name__ == "__main__":
