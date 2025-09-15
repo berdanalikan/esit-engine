@@ -105,19 +105,16 @@ try:
 except Exception as e:
     feedback_logger.error(f"❌ Failed to initialize multi-manual system: {e}")
 
-# Legacy PDF path for backward compatibility
+# Legacy PDF path (optional). We no longer require this file; keep info-level log only if present.
 PDF_PATH = str(Path.cwd() / "data" / "processed" / "Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf")
 
-# Validate PDF exists at startup
-if not Path(PDF_PATH).exists():
-    feedback_logger.warning(f"⚠️ Legacy PDF file not found at: {PDF_PATH}")
-    feedback_logger.info(f"📁 Current working directory: {Path.cwd()}")
-    feedback_logger.info(f"📁 Available PDF files: {list(Path.cwd().glob('*.pdf'))}")
-else:
+if Path(PDF_PATH).exists():
     feedback_logger.info(f"✅ Legacy PDF file found: {PDF_PATH}")
+else:
+    feedback_logger.debug(f"ℹ️ Legacy PDF file not found (optional): {PDF_PATH}")
 
 # Images directory (processed from PDF) - serve all manual images
-MANUALS_DIR = Path("kullanma kılavuzları")
+MANUALS_DIR = Path("data/manuals")
 if MANUALS_DIR.exists():
     # Mount all manual image directories
     for pdf_file in MANUALS_DIR.glob("*.pdf"):
@@ -127,7 +124,7 @@ if MANUALS_DIR.exists():
             app.mount(mount_path, StaticFiles(directory=images_dir), name=f"images_{pdf_file.stem}")
             feedback_logger.info(f"🖼️ Serving images from: {images_dir} at {mount_path}")
 else:
-    feedback_logger.warning(f"🖼️ Manuals directory not found: {MANUALS_DIR}")
+    feedback_logger.info(f"ℹ️ Manuals directory not found (optional): {MANUALS_DIR}")
 
 # Feedback data file path (allow override via FEEDBACK_DIR for deployments)
 FEEDBACK_FILE = Path(os.getenv("FEEDBACK_DIR", str(Path(__file__).parent))) / "feedback_data.json"
