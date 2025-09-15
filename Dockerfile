@@ -33,4 +33,4 @@ EXPOSE 8080
 
 # Start with python (app.py starts uvicorn)
 ENV PORT=8080
-CMD ["python", "start_render.py"]
+CMD ["python", "src/api/app.py"]

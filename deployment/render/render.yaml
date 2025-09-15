@@ -3,7 +3,7 @@ services:
     name: esit-tech-support
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    startCommand: python src/api/app.py
     envVars:
       - key: PORT
         value: 10000
