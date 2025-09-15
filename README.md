@@ -1,10 +1,10 @@
 # ESİT Technical Support AI System
 
-## 📋 Proje Özeti
+## Proje Özeti
 
 ESİT Technical Support AI System, ESİT şirketinin tüm ürünleri için akıllı teknik destek sağlayan bir yapay zeka sistemidir. Sistem, 12 farklı ESİT ürününün kullanım kılavuzlarını entegre ederek, kullanıcılara Türkçe teknik destek hizmeti sunar.
 
-## 🎯 Özellikler
+## Özellikler
 
 - **Çoklu PDF Desteği**: 12 farklı ESİT ürününü destekler
 - **Akıllı Kategorileme**: Weighing Scale, Load Cell, Indicator kategorileri
@@ -14,7 +14,7 @@ ESİT Technical Support AI System, ESİT şirketinin tüm ürünleri için akıl
 - **Ürün Arama**: Ürün adı ve kategoriye göre arama
 - **Feedback Sistemi**: Kullanıcı geri bildirimleri toplama
 
-## 🏗️ Proje Yapısı
+## Proje Yapısı
 
 ```
 esit-engine/
@@ -45,7 +45,7 @@ esit-engine/
 └── README.md                    # Bu dosya
 ```
 
-## 🚀 Kurulum
+## Kurulum
 
 ### Gereksinimler
 
@@ -94,7 +94,7 @@ python src/api/app.py
 
 Uygulama `http://localhost:8000` adresinde çalışacaktır.
 
-## 📚 API Dokümantasyonu
+## API Dokümantasyonu
 
 ### Ana Endpoint'ler
 
@@ -190,7 +190,7 @@ GET /health
 }
 ```
 
-## 🎮 Kullanım
+## Kullanım
 
 ### Web Arayüzü
 
@@ -214,7 +214,7 @@ products = requests.get('http://localhost:8000/products')
 print(products.json()['products'])
 ```
 
-## 📦 Desteklenen Ürünler
+## Desteklenen Ürünler
 
 ### Weighing Scale (9 ürün)
 - **TR-4 Scale**: TR4-User-Manual.pdf
@@ -234,7 +234,7 @@ print(products.json()['products'])
 ### Indicator (1 ürün)
 - **PWI Series Indicator**: PWI-SERIES-INDICATOR-USER-MANUAL-EN.pdf
 
-## 🔧 Konfigürasyon
+## Konfigürasyon
 
 ### Environment Variables
 
@@ -260,7 +260,7 @@ response = self.client.chat.completions.create(
 )
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Render.com ile Deployment
 
@@ -280,7 +280,7 @@ docker build -t esit-ai .
 docker run -p 8000:8000 -e OPENAI_API_KEY=your_key esit-ai
 ```
 
-## 🧪 Test
+## Test
 
 ### Manuel Test
 
@@ -304,7 +304,7 @@ curl http://localhost:8000/products
 python -m pytest tests/
 ```
 
-## 📊 Monitoring ve Logging
+## Monitoring ve Logging
 
 ### Log Dosyaları
 
@@ -316,14 +316,14 @@ python -m pytest tests/
 - `/health` endpoint'i sistem durumunu izler
 - `/feedback/analysis` endpoint'i kullanıcı memnuniyetini analiz eder
 
-## 🔒 Güvenlik
+## Güvenlik
 
 - API anahtarları environment variables ile korunur
 - CORS middleware aktif
 - Input validation mevcut
 - Rate limiting (gelecekte eklenecek)
 
-## 🐛 Sorun Giderme
+## Sorun Giderme
 
 ### Yaygın Sorunlar
 
@@ -347,7 +347,7 @@ python -m pytest tests/
 PYTHONPATH=. python -u src/api/app.py
 ```
 
-## 📈 Gelecek Geliştirmeler
+## Gelecek Geliştirmeler
 
 - [ ] Unit testler ekleme
 - [ ] Rate limiting implementasyonu
@@ -356,7 +356,7 @@ PYTHONPATH=. python -u src/api/app.py
 - [ ] Advanced analytics dashboard
 - [ ] Mobile app desteği
 
-## 👥 Katkıda Bulunma
+## Katkıda Bulunma
 
 1. Fork yapın
 2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
@@ -364,13 +364,13 @@ PYTHONPATH=. python -u src/api/app.py
 4. Push yapın (`git push origin feature/amazing-feature`)
 5. Pull Request oluşturun
 
-## 📞 İletişim
+## İletişim
 
 - **ESİT Teknik Destek**: (0216) 585 18 18
 - **Email**: servis@esit.com.tr
 - **Proje Repository**: [GitHub Link]
 
-## 📄 Lisans
+## Lisans
 
 Bu proje ESİT şirketi için özel olarak geliştirilmiştir. Tüm hakları saklıdır.
 
