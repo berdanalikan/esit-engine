@@ -1,0 +1,95 @@
+{
+  "generated_date": "2025-09-15T08:48:48.561562",
+  "total_manuals": 12,
+  "manuals": [
+    {
+      "filename": "TR4-User-Manual.pdf",
+      "product_name": "TR-4 Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/TR4-User-Manual.pdf"
+    },
+    {
+      "filename": "ART-2-ENG-R00.pdf",
+      "product_name": "ART-2 Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/ART-2-ENG-R00.pdf"
+    },
+    {
+      "filename": "Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf",
+      "product_name": "ECI Automatic Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/Esit_ECI_User_Manual_Automatic_ENG_v1_7 kopyası.pdf"
+    },
+    {
+      "filename": "PWI-SERIES-INDICATOR-USER-MANUAL-EN.pdf",
+      "product_name": "PWI Series Indicator",
+      "product_category": "Indicator",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/PWI-SERIES-INDICATOR-USER-MANUAL-EN.pdf"
+    },
+    {
+      "filename": "Weighfly-User-Manual.pdf",
+      "product_name": "Weighfly Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/Weighfly-User-Manual.pdf"
+    },
+    {
+      "filename": "Esit-LCA-User-Manual-EN.pdf",
+      "product_name": "LCA Load Cell",
+      "product_category": "Load Cell",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/Esit-LCA-User-Manual-EN.pdf"
+    },
+    {
+      "filename": "SMART-2 USER MANUAL ENG - R02.pdf",
+      "product_name": "SMART-2 Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/SMART-2 USER MANUAL ENG - R02.pdf"
+    },
+    {
+      "filename": "ART-EN.pdf",
+      "product_name": "ART Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/ART-EN.pdf"
+    },
+    {
+      "filename": "ESIT-AS-Axle-Scale-Manual-EN.pdf",
+      "product_name": "AS Axle Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/ESIT-AS-Axle-Scale-Manual-EN.pdf"
+    },
+    {
+      "filename": "LCA-B-AR-User Manual-EN.pdf",
+      "product_name": "LCA-B Load Cell",
+      "product_category": "Load Cell",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/LCA-B-AR-User Manual-EN.pdf"
+    },
+    {
+      "filename": "AWS-Aircraft Weighing System_EN_rev1.pdf",
+      "product_name": "AWS Aircraft Weighing System",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/AWS-Aircraft Weighing System_EN_rev1.pdf"
+    },
+    {
+      "filename": "TR-3-Kilavuz-ENG.pdf",
+      "product_name": "TR-3 Scale",
+      "product_category": "Weighing Scale",
+      "language": "English",
+      "file_path": "kullanma kılavuzları/TR-3-Kilavuz-ENG.pdf"
+    }
+  ],
+  "categories": [
+    "Indicator",
+    "Load Cell",
+    "Weighing Scale"
+  ]
+}
