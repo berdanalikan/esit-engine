@@ -36,6 +36,8 @@ class TechnicalSupportAI:
         
         # Conversation history for context
         self.conversation_history = []
+        # Kullanıcının üzerinde çalıştığı ürün (sohbet boyunca tutulur)
+        self.current_product: Optional[str] = None
         
         # Technical categories for better problem classification
         self.tech_categories = {
@@ -260,6 +262,15 @@ class TechnicalSupportAI:
         # Add to conversation history
         self.conversation_history.append({"role": "user", "content": user_input})
         
+        # Ürün tespiti (mesaj + geçmiş üzerinden)
+        detected_product = self._detect_product_from_text(user_input)
+        if detected_product:
+            self.current_product = detected_product
+
+        # Eğer ürün belirlenmediyse, ilk etapta kullanıcıdan cihazı netleştirmesini iste
+        if not self.current_product:
+            return self._ask_for_product_clarification()
+
         # Classify the problem
         classification = self.classify_problem(user_input)
         
@@ -317,6 +328,7 @@ class TechnicalSupportAI:
             return {
                 "response": ai_response,
                 "classification": classification,
+                "product": self.current_product,
                 "has_manual_info": has_manual_info,
                 "search_results": search_results,
                 "success": True
@@ -329,6 +341,50 @@ class TechnicalSupportAI:
                 "error": str(e),
                 "success": False
             }
+
+    def _ask_for_product_clarification(self) -> Dict[str, Any]:
+        """Kullanıcıdan ürün adını/cihazı netleştirmesini ister."""
+        try:
+            products = self.multi_manual.get_all_products()
+            # Kısa bir öneri listesi (azami 8 öğe)
+            top_products = [p.get("product_name") for p in products][:8]
+            suggestion_line = "; ".join(top_products)
+            prompt = (
+                "Hangi ESİT cihazı ile çalışıyorsunuz? Lütfen ürün adını belirtin. "
+                "Örnekler: " + suggestion_line
+            )
+            return {
+                "response": prompt,
+                "needs_product": True,
+                "success": True,
+                "available_products": [p.get("product_name") for p in products],
+                "product_categories": self.multi_manual.get_categories(),
+            }
+        except Exception:
+            return {
+                "response": "Hangi ESİT cihazı ile çalıştığınızı belirtir misiniz?",
+                "needs_product": True,
+                "success": True
+            }
+
+    def _detect_product_from_text(self, text: str) -> Optional[str]:
+        """Kullanıcı mesajından bilinen bir ürün adını yakalamaya çalışır."""
+        try:
+            text_l = (text or "").lower()
+            for product in self.multi_manual.get_all_products():
+                name = (product.get("product_name") or "").lower()
+                if not name:
+                    continue
+                if name in text_l:
+                    return product.get("product_name")
+                # Basit eşleşme: boşluk ve tire varyasyonları
+                name_compact = name.replace(" ", "").replace("-", "")
+                text_compact = text_l.replace(" ", "").replace("-", "")
+                if name_compact and name_compact in text_compact:
+                    return product.get("product_name")
+            return None
+        except Exception:
+            return None
     
     def _build_system_prompt(self, classification: Dict, context: str, has_manual_info: bool) -> str:
         """Build system prompt for fine-tuned AI"""
