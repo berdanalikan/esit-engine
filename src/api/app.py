@@ -1678,7 +1678,7 @@ async def root():
     </div>
     
     <!-- Product Selection Modal -->
-    <div id="productModal" class="product-modal">
+    <div id="productModal" class="product-modal show">
         <div class="product-modal-content">
             <div class="product-modal-header">
                 <div>
@@ -1765,11 +1765,23 @@ async def root():
         const ttsIcon = document.getElementById('ttsIcon');
         
         // Event listeners
-        sendButton.addEventListener('click', sendMessage);
+        sendButton.addEventListener('click', function(e){
+            e.preventDefault();
+            sendMessage();
+        });
         const hamburgerBtnEl = document.getElementById('hamburgerBtn');
         if (hamburgerBtnEl) {
             hamburgerBtnEl.addEventListener('click', toggleSidebar);
         }
+        // Ensure keyboard submit works when input enabled
+        messageInput.addEventListener('keydown', function(e){
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!messageInput.disabled && !sendButton.disabled) {
+                    sendMessage();
+                }
+            }
+        });
         messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -1789,7 +1801,10 @@ async def root():
         messageInput.disabled = true;
         document.body.classList.add('product-selection-active');
         window.addEventListener('load', () => {
-            openProductModal();
+            // Modal zaten default olarak açık; yine de ürünleri yükle
+            if (availableProducts.length === 0) {
+                loadProducts();
+            }
         });
         
         function selectCategory(category) {
