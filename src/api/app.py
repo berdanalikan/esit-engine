@@ -1534,7 +1534,7 @@ async def root():
 <body>
     <div class="app-container">
         <!-- Hamburger Menu Button -->
-        <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()">
+        <button class="hamburger-btn" id="hamburgerBtn">
             <span class="hamburger-icon" id="hamburgerIcon">☰</span>
         </button>
         
@@ -1765,6 +1765,10 @@ async def root():
         
         // Event listeners
         sendButton.addEventListener('click', sendMessage);
+        const hamburgerBtnEl = document.getElementById('hamburgerBtn');
+        if (hamburgerBtnEl) {
+            hamburgerBtnEl.addEventListener('click', toggleSidebar);
+        }
         messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
