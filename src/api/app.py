@@ -256,6 +256,14 @@ async def root():
             user-select: none;
         }
         
+        /* First screen: product selection only */
+        body.product-selection-active .header,
+        body.product-selection-active .chat-container,
+        body.product-selection-active .sidebar,
+        body.product-selection-active .hamburger-btn {
+            display: none;
+        }
+        
         /* Allow text selection for messages and input */
         .message-content, .message-input, .feedback-additional-input {
             -webkit-user-select: text;
@@ -1771,9 +1779,10 @@ async def root():
         });
         
         // Avoid auto-focus on mobile to prevent keyboard pop
-        // Başlangıçta ürün seçimi zorunlu: modalı aç, inputu kilitle
+        // Başlangıçta ürün seçimi zorunlu: sadece ürün seçimi ekranı görünür
         sendButton.disabled = true;
         messageInput.disabled = true;
+        document.body.classList.add('product-selection-active');
         window.addEventListener('load', () => {
             openProductModal();
         });
@@ -2015,6 +2024,8 @@ async def root():
                     // Enable input after product selection
                     sendButton.disabled = false;
                     messageInput.disabled = false;
+                    // Reveal chat UI
+                    document.body.classList.remove('product-selection-active');
                     if (window.innerWidth > 768) {
                         messageInput.focus();
                     }
