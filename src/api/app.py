@@ -1738,6 +1738,7 @@ async def root():
         let ttsEnabled = false;
         let selectedProduct = null;
         let availableProducts = [];
+        let pendingMessage = null;
         
         // Mobile viewport height fix (100vh issue on iOS/Android)
         function setViewportHeightVar() {
@@ -2016,6 +2017,11 @@ async def root():
                     
                     // Show confirmation message
                     addMessage('bot', `✅ ${selectedProduct} seçildi. Artık bu cihaz hakkında sorularınızı sorabilirsiniz.`);
+                    
+                    // If there is a pending message, send it now (do not re-add user bubble)
+                    if (pendingMessage) {
+                        sendPendingMessage();
+                    }
                 } else {
                     console.error('Product selection failed:', data.message);
                     alert('Ürün seçimi başarısız: ' + data.message);
@@ -2032,6 +2038,39 @@ async def root():
                 } else {
                     alert('Ürün seçimi sırasında hata oluştu: ' + error.message + '\n\nLütfen sayfayı yenileyin ve tekrar deneyin.');
                 }
+            }
+        }
+        
+        async function sendPendingMessage() {
+            const message = pendingMessage;
+            pendingMessage = null;
+            if (!message || !selectedProduct) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        selected_product: selectedProduct
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    addMessage('bot', data.response, messageId, data.image_urls || []);
+                    window.lastUserMessage = message;
+                } else {
+                    addMessage('bot', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('bot', 'Bağlantı hatası. Lütfen tekrar deneyin.');
+            } finally {
+                setLoading(false);
             }
         }
         
@@ -2170,6 +2209,7 @@ async def root():
                 addMessage('user', message);
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
+                pendingMessage = message;
                 
                 // Show product selection modal
                 setTimeout(() => {
