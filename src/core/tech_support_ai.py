@@ -350,8 +350,10 @@ class TechnicalSupportAI:
             top_products = [p.get("product_name") for p in products][:8]
             suggestion_line = "; ".join(top_products)
             prompt = (
-                "Hangi ESİT cihazı ile çalışıyorsunuz? Lütfen ürün adını belirtin. "
-                "Örnekler: " + suggestion_line
+                "🔧 ESİT Teknik Destek'e hoş geldiniz!\n\n"
+                "Size en iyi şekilde yardımcı olabilmem için hangi ESİT cihazı ile çalıştığınızı belirtmeniz gerekiyor.\n\n"
+                "Mevcut ürünlerimiz:\n" + suggestion_line + "\n\n"
+                "Lütfen ürününüzü seçmek için yukarıdaki 'Ürün Seç' butonuna tıklayın."
             )
             return {
                 "response": prompt,
@@ -389,6 +391,16 @@ class TechnicalSupportAI:
     def _build_system_prompt(self, classification: Dict, context: str, has_manual_info: bool) -> str:
         """Build system prompt for fine-tuned AI"""
         
+        # Seçilen ürüne göre özelleştirilmiş prompt
+        product_context = ""
+        if self.current_product:
+            product_context = f"""
+SEÇİLEN ÜRÜN: {self.current_product}
+- Bu ürün hakkında özel uzmanlığın var
+- Sadece {self.current_product} ile ilgili sorulara odaklan
+- Diğer ürünlerle karıştırma
+"""
+        
         # Fine-tuned model için basitleştirilmiş prompt
         base_prompt = f"""Sen ESİT teknik destek uzmanısın. Tüm ESİT ürünleri konusunda uzman bir teknisyensin.
 
@@ -404,6 +416,7 @@ GÖREV:
 - Direkt çözüm ver, yönlendirme yapma
 - Sen zaten tüm bilgilere sahipsin, o şekilde davran
 
+{product_context}
 ESİT ÜRÜN PORTFÖYÜ:
 {self.multi_manual.get_product_context()}
 
@@ -436,8 +449,9 @@ Eğer tam emin değilsen, genel teknik yaklaşımları öner ama asla başka yer
         return prompt
     
     def reset_conversation(self):
-        """Reset conversation history"""
+        """Reset conversation history and product selection"""
         self.conversation_history = []
+        self.current_product = None
     
     def get_conversation_summary(self) -> Dict[str, Any]:
         """Get conversation summary"""

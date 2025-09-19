@@ -65,6 +65,10 @@ app.add_middleware(
 # Request models
 class ChatRequest(BaseModel):
     message: str
+    selected_product: Optional[str] = None  # Seçilen ürün adı
+
+class ProductSelectionRequest(BaseModel):
+    product_name: str
 
 class TTSRequest(BaseModel):
     text: str
@@ -609,6 +613,150 @@ async def root():
         
         .welcome-container.hidden {
             display: none;
+        }
+        
+        /* Product Selection Modal */
+        .product-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .product-modal.show {
+            display: flex;
+        }
+        
+        .product-modal-content {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .product-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .product-modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e6edf3;
+        }
+        
+        .product-modal-subtitle {
+            color: #7d8590;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .product-card {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        
+        .product-card:hover {
+            background: #30363d;
+            border-color: #484f58;
+        }
+        
+        .product-card.selected {
+            background: #1f6feb;
+            border-color: #1f6feb;
+            color: white;
+        }
+        
+        .product-card.selected:hover {
+            background: #1f6feb;
+            border-color: #1f6feb;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 4px;
+        }
+        
+        .product-card.selected .product-name {
+            color: white;
+        }
+        
+        .product-category {
+            font-size: 12px;
+            color: #7d8590;
+        }
+        
+        .product-card.selected .product-category {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .product-modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .product-modal-btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .product-modal-btn.cancel {
+            background: transparent;
+            border-color: #30363d;
+            color: #e6edf3;
+        }
+        
+        .product-modal-btn.cancel:hover {
+            background: #21262d;
+        }
+        
+        .product-modal-btn.select {
+            background: #1f6feb;
+            color: white;
+        }
+        
+        .product-modal-btn.select:hover {
+            background: #1a5bb8;
+        }
+        
+        .product-modal-btn:disabled {
+            background: #21262d;
+            color: #484f58;
+            cursor: not-allowed;
         }
         
         .esit-logo {
@@ -1259,6 +1407,49 @@ async def root():
                 flex: 1;
                 text-align: center;
             }
+            
+            /* Mobile Product Modal */
+            .product-modal-content {
+                width: 95%;
+                max-width: none;
+                margin: 8px;
+                padding: 16px;
+                border-radius: 8px;
+                max-height: 85vh;
+            }
+            
+            .product-modal-title {
+                font-size: 18px;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .product-card {
+                padding: 12px;
+            }
+            
+            .product-name {
+                font-size: 14px;
+            }
+            
+            .product-category {
+                font-size: 11px;
+            }
+            
+            .product-modal-footer {
+                gap: 8px;
+                margin-top: 16px;
+            }
+            
+            .product-modal-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                flex: 1;
+                text-align: center;
+            }
         }
         
         /* Small Mobile (iPhone SE, etc.) */
@@ -1477,6 +1668,25 @@ async def root():
         </div>
     </div>
     
+    <!-- Product Selection Modal -->
+    <div id="productModal" class="product-modal">
+        <div class="product-modal-content">
+            <div class="product-modal-header">
+                <div>
+                    <h3 class="product-modal-title">ESİT Ürün Seçimi</h3>
+                    <p class="product-modal-subtitle">Hangi ESİT cihazı ile çalıştığınızı seçin</p>
+                </div>
+            </div>
+            <div class="product-grid" id="productGrid">
+                <!-- Products will be loaded here -->
+            </div>
+            <div class="product-modal-footer">
+                <button class="product-modal-btn cancel" onclick="closeProductModal()">İptal</button>
+                <button class="product-modal-btn select" id="selectProductBtn" onclick="confirmProductSelection()" disabled>Seç</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Feedback Modal -->
     <div id="feedbackModal" class="feedback-modal">
         <div class="feedback-modal-content">
@@ -1526,6 +1736,8 @@ async def root():
         let isLoading = false;
         let selectedCategory = 'ECI';
         let ttsEnabled = false;
+        let selectedProduct = null;
+        let availableProducts = [];
         
         // Mobile viewport height fix (100vh issue on iOS/Android)
         function setViewportHeightVar() {
@@ -1670,7 +1882,126 @@ async def root():
             if (e.key === 'Escape' && document.getElementById('feedbackModal').classList.contains('show')) {
                 closeFeedbackModal();
             }
+            if (e.key === 'Escape' && document.getElementById('productModal').classList.contains('show')) {
+                closeProductModal();
+            }
         });
+        
+        // Product Selection Functions
+        async function loadProducts() {
+            try {
+                const response = await fetch('/products');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    availableProducts = data.products;
+                    renderProductGrid();
+                } else {
+                    console.error('Failed to load products:', data.message);
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+        
+        function renderProductGrid() {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+            
+            availableProducts.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.dataset.productName = product.product_name;
+                productCard.onclick = () => selectProductCard(product.product_name);
+                
+                productCard.innerHTML = `
+                    <div class="product-name">${product.product_name}</div>
+                    <div class="product-category">${product.product_category}</div>
+                `;
+                
+                productGrid.appendChild(productCard);
+            });
+        }
+        
+        function selectProductCard(productName) {
+            // Remove previous selection
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            const selectedCard = document.querySelector(`[data-product-name="${productName}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                selectedProduct = productName;
+                
+                // Enable select button
+                const selectBtn = document.getElementById('selectProductBtn');
+                selectBtn.disabled = false;
+            }
+        }
+        
+        function openProductModal() {
+            document.getElementById('productModal').classList.add('show');
+            if (availableProducts.length === 0) {
+                loadProducts();
+            }
+        }
+        
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('show');
+            selectedProduct = null;
+            
+            // Reset selection
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Disable select button
+            const selectBtn = document.getElementById('selectProductBtn');
+            selectBtn.disabled = true;
+        }
+        
+        async function confirmProductSelection() {
+            if (!selectedProduct) return;
+            
+            try {
+                const response = await fetch('/select-product', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_name: selectedProduct
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update UI to show selected product
+                    updateSelectedProductDisplay(selectedProduct);
+                    closeProductModal();
+                    
+                    // Show confirmation message
+                    addMessage('bot', `✅ ${selectedProduct} seçildi. Artık bu cihaz hakkında sorularınızı sorabilirsiniz.`);
+                } else {
+                    console.error('Product selection failed:', data.message);
+                    alert('Ürün seçimi başarısız: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error selecting product:', error);
+                alert('Ürün seçimi sırasında hata oluştu.');
+            }
+        }
+        
+        function updateSelectedProductDisplay(productName) {
+            // Update header to show selected product
+            const headerTitle = document.querySelector('.header-title p');
+            if (headerTitle) {
+                headerTitle.textContent = `Seçili Cihaz: ${productName}`;
+            }
+        }
         
         // Feedback submission function
         async function submitFeedback(messageId, feedbackType, botResponse, reason = null) {
@@ -1794,6 +2125,19 @@ async def root():
             const message = messageInput.value.trim();
             if (!message || isLoading) return;
             
+            // Check if product is selected, if not show product selection modal
+            if (!selectedProduct) {
+                addMessage('user', message);
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // Show product selection modal
+                setTimeout(() => {
+                    openProductModal();
+                }, 100);
+                return;
+            }
+            
             // Animate welcome message fade out on first message
             const welcomeMsg = document.querySelector('.welcome-container');
             const messagesContainer = document.getElementById('messages');
@@ -1821,7 +2165,8 @@ async def root():
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ 
-                        message: message
+                        message: message,
+                        selected_product: selectedProduct
                     })
                 });
                 
@@ -1978,6 +2323,12 @@ async def root():
         async function resetConversation() {
             try {
                 await fetch('/reset', { method: 'POST' });
+                // Reset product selection
+                selectedProduct = null;
+                const headerTitle = document.querySelector('.header-title p');
+                if (headerTitle) {
+                    headerTitle.textContent = 'Yapay Zeka Asistanı';
+                }
                 location.reload();
             } catch (error) {
                 alert('Sıfırlama hatası');
@@ -1998,6 +2349,10 @@ async def chat(request: ChatRequest):
         ai = get_tech_support_ai(PDF_PATH)
         if not ai:
             raise HTTPException(status_code=500, detail="AI system not initialized")
+        
+        # Eğer kullanıcı ürün seçtiyse, AI'ya bildir
+        if request.selected_product:
+            ai.current_product = request.selected_product
         
         # Generate response (AI now has multi-manual context built-in)
         result = ai.generate_response(request.message)
@@ -2021,6 +2376,35 @@ async def chat(request: ChatRequest):
             "error": str(e),
             "success": False
         }
+
+@app.post("/select-product")
+async def select_product(request: ProductSelectionRequest):
+    """Kullanıcının seçtiği ürünü AI'ya bildir"""
+    try:
+        ai = get_tech_support_ai(PDF_PATH)
+        if not ai:
+            raise HTTPException(status_code=500, detail="AI system not initialized")
+        
+        # Ürünün geçerli olup olmadığını kontrol et
+        available_products = [p["product_name"] for p in multi_manual_system.get_all_products()]
+        if request.product_name not in available_products:
+            return {
+                "success": False,
+                "message": f"Geçersiz ürün: {request.product_name}",
+                "available_products": available_products
+            }
+        
+        # AI'ya ürünü bildir
+        ai.current_product = request.product_name
+        
+        return {
+            "success": True,
+            "message": f"Ürün seçildi: {request.product_name}",
+            "selected_product": request.product_name
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.post("/reset")
 async def reset_conversation():
