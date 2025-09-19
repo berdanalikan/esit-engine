@@ -1806,6 +1806,17 @@ async def root():
         messageInput.disabled = true;
         document.body.classList.add('product-selection-active');
         window.addEventListener('load', () => {
+            // Local storage'da ürün varsa doğrudan sohbeti aç
+            const savedProduct = window.localStorage.getItem('selectedProduct');
+            if (savedProduct) {
+                selectedProduct = savedProduct;
+                updateSelectedProductDisplay(savedProduct);
+                document.body.classList.remove('product-selection-active');
+                document.getElementById('productModal').classList.remove('show');
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                return;
+            }
             // Modal zaten default olarak açık; yine de ürünleri yükle
             if (availableProducts.length === 0) {
                 loadProducts();
@@ -2020,6 +2031,17 @@ async def root():
         }
         
         function closeProductModal() {
+            // Ürün seçilmeden modal kapanmasın
+            if (!selectedProduct) {
+                try {
+                    const btn = document.getElementById('selectProductBtn');
+                    if (btn) {
+                        btn.classList.add('shake');
+                        setTimeout(() => btn.classList.remove('shake'), 500);
+                    }
+                } catch (e) {}
+                return;
+            }
             document.getElementById('productModal').classList.remove('show');
             // Not: Seçim yapıldıktan sonra modal kapatılır, seçim korunur
         }
@@ -2071,6 +2093,8 @@ async def root():
                     if (window.innerWidth > 768) {
                         messageInput.focus();
                     }
+                    // Persist selection
+                    try { window.localStorage.setItem('selectedProduct', selectedProduct); } catch (e) {}
                     
                     // If there is a pending message, send it now (do not re-add user bubble)
                     if (pendingMessage) {
