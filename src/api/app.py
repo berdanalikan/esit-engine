@@ -1891,6 +1891,20 @@ async def root():
         async function loadProducts() {
             try {
                 const response = await fetch('/products');
+                
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Sunucu JSON olmayan bir yanıt döndürdü. Lütfen sayfayı yenileyin.');
+                }
+                
                 const data = await response.json();
                 
                 if (data.status === 'success') {
@@ -1898,9 +1912,11 @@ async def root():
                     renderProductGrid();
                 } else {
                     console.error('Failed to load products:', data.message);
+                    alert('Ürün listesi yüklenemedi: ' + data.message);
                 }
             } catch (error) {
                 console.error('Error loading products:', error);
+                alert('Ürün listesi yüklenirken hata oluştu: ' + error.message + '\n\nLütfen sayfayı yenileyin ve tekrar deneyin.');
             }
         }
         
@@ -1962,8 +1978,10 @@ async def root():
             selectBtn.disabled = true;
         }
         
-        async function confirmProductSelection() {
+        async function confirmProductSelection(retryCount = 0) {
             if (!selectedProduct) return;
+            
+            const maxRetries = 2;
             
             try {
                 const response = await fetch('/select-product', {
@@ -1975,6 +1993,19 @@ async def root():
                         product_name: selectedProduct
                     })
                 });
+                
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Sunucu JSON olmayan bir yanıt döndürdü.');
+                }
                 
                 const data = await response.json();
                 
@@ -1991,7 +2022,16 @@ async def root():
                 }
             } catch (error) {
                 console.error('Error selecting product:', error);
-                alert('Ürün seçimi sırasında hata oluştu.');
+                
+                // Retry logic
+                if (retryCount < maxRetries) {
+                    console.log(`Retrying product selection (${retryCount + 1}/${maxRetries})...`);
+                    setTimeout(() => {
+                        confirmProductSelection(retryCount + 1);
+                    }, 1000 * (retryCount + 1)); // Exponential backoff
+                } else {
+                    alert('Ürün seçimi sırasında hata oluştu: ' + error.message + '\n\nLütfen sayfayı yenileyin ve tekrar deneyin.');
+                }
             }
         }
         
@@ -2385,6 +2425,10 @@ async def select_product(request: ProductSelectionRequest):
         if not ai:
             raise HTTPException(status_code=500, detail="AI system not initialized")
         
+        # Multi-manual sistem kontrolü
+        if not multi_manual_system:
+            raise HTTPException(status_code=500, detail="Multi-manual system not initialized")
+        
         # Ürünün geçerli olup olmadığını kontrol et
         available_products = [p["product_name"] for p in multi_manual_system.get_all_products()]
         if request.product_name not in available_products:
@@ -2403,8 +2447,11 @@ async def select_product(request: ProductSelectionRequest):
             "selected_product": request.product_name
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        print(f"Error in select-product: {e}")
+        raise HTTPException(status_code=500, detail=f"Sunucu hatası: {str(e)}")
 
 @app.post("/reset")
 async def reset_conversation():
