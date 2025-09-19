@@ -1689,6 +1689,11 @@ async def root():
             <div class="product-grid" id="productGrid">
                 <!-- Products will be loaded here -->
             </div>
+            <div id="productFallback" style="display:none; margin-top:8px;">
+                <input id="productInput" type="text" placeholder="Ürün adını yazın (ör. ECI Automatic Scale)" 
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #30363d; background:#0d1117; color:#e6edf3;" />
+                <small style="color:#7d8590; display:block; margin-top:6px;">Liste boşsa ürün adını manuel girin.</small>
+            </div>
             <div class="product-modal-footer">
                 <button class="product-modal-btn cancel" onclick="closeProductModal()">İptal</button>
                 <button class="product-modal-btn select" id="selectProductBtn" onclick="confirmProductSelection()" disabled>Seç</button>
@@ -1942,15 +1947,32 @@ async def root():
                 
                 if (data.status === 'success') {
                     availableProducts = data.products;
-                    renderProductGrid();
+                    if (availableProducts.length > 0) {
+                        document.getElementById('productFallback').style.display = 'none';
+                        renderProductGrid();
+                    } else {
+                        showProductFallback();
+                    }
                 } else {
                     console.error('Failed to load products:', data.message);
-                    alert('Ürün listesi yüklenemedi: ' + data.message);
+                    showProductFallback();
                 }
             } catch (error) {
                 console.error('Error loading products:', error);
-                alert('Ürün listesi yüklenirken hata oluştu: ' + error.message + '\n\nLütfen sayfayı yenileyin ve tekrar deneyin.');
+                showProductFallback();
             }
+        }
+
+        function showProductFallback() {
+            const fb = document.getElementById('productFallback');
+            fb.style.display = 'block';
+            const selectBtn = document.getElementById('selectProductBtn');
+            const input = document.getElementById('productInput');
+            input.addEventListener('input', () => {
+                const val = input.value.trim();
+                selectedProduct = val || null;
+                selectBtn.disabled = !val;
+            });
         }
         
         function renderProductGrid() {
