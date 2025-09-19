@@ -1771,9 +1771,12 @@ async def root():
         });
         
         // Avoid auto-focus on mobile to prevent keyboard pop
-        if (window.innerWidth > 768) {
-            messageInput.focus();
-        }
+        // Başlangıçta ürün seçimi zorunlu: modalı aç, inputu kilitle
+        sendButton.disabled = true;
+        messageInput.disabled = true;
+        window.addEventListener('load', () => {
+            openProductModal();
+        });
         
         function selectCategory(category) {
             selectedCategory = category;
@@ -1967,16 +1970,7 @@ async def root():
         
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('show');
-            selectedProduct = null;
-            
-            // Reset selection
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // Disable select button
-            const selectBtn = document.getElementById('selectProductBtn');
-            selectBtn.disabled = true;
+            // Not: Seçim yapıldıktan sonra modal kapatılır, seçim korunur
         }
         
         async function confirmProductSelection(retryCount = 0) {
@@ -2017,6 +2011,13 @@ async def root():
                     
                     // Show confirmation message
                     addMessage('bot', `✅ ${selectedProduct} seçildi. Artık bu cihaz hakkında sorularınızı sorabilirsiniz.`);
+
+                    // Enable input after product selection
+                    sendButton.disabled = false;
+                    messageInput.disabled = false;
+                    if (window.innerWidth > 768) {
+                        messageInput.focus();
+                    }
                     
                     // If there is a pending message, send it now (do not re-add user bubble)
                     if (pendingMessage) {
@@ -2206,15 +2207,8 @@ async def root():
             
             // Check if product is selected, if not show product selection modal
             if (!selectedProduct) {
-                addMessage('user', message);
-                messageInput.value = '';
-                messageInput.style.height = 'auto';
-                pendingMessage = message;
-                
-                // Show product selection modal
-                setTimeout(() => {
-                    openProductModal();
-                }, 100);
+                // Ürün seçilmeden mesaj gönderme: modal aç ve gönderme
+                openProductModal();
                 return;
             }
             
@@ -2430,6 +2424,14 @@ async def chat(request: ChatRequest):
         if not ai:
             raise HTTPException(status_code=500, detail="AI system not initialized")
         
+        # Require product selection; block if not set both on request and server state
+        if not (request.selected_product or ai.current_product):
+            return {
+                "success": False,
+                "response": "Lütfen önce bir ürün seçin.",
+                "needs_product": True
+            }
+
         # Eğer kullanıcı ürün seçtiyse, AI'ya bildir
         if request.selected_product:
             ai.current_product = request.selected_product

@@ -263,9 +263,11 @@ class TechnicalSupportAI:
         self.conversation_history.append({"role": "user", "content": user_input})
         
         # Ürün tespiti (mesaj + geçmiş üzerinden)
-        detected_product = self._detect_product_from_text(user_input)
-        if detected_product:
-            self.current_product = detected_product
+        # Not: Bir ürün zaten seçildiyse (UI'dan), mid-conversation ürün değişikliği yapmayız
+        if not self.current_product:
+            detected_product = self._detect_product_from_text(user_input)
+            if detected_product:
+                self.current_product = detected_product
 
         # Eğer ürün belirlenmediyse, ilk etapta kullanıcıdan cihazı netleştirmesini iste
         if not self.current_product:
