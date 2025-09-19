@@ -221,6 +221,7 @@ async def root():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d1117">
     <title>ESİT Teknik Servis Destek</title>
@@ -2259,6 +2260,15 @@ async def root():
                     })
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON /chat response:', text);
+                    throw new Error('Sunucu JSON olmayan bir yanıt döndürdü.');
+                }
                 const data = await response.json();
                 
                 if (data.success) {
@@ -2283,8 +2293,8 @@ async def root():
                     addMessage('bot', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                addMessage('bot', 'Bağlantı hatası. Lütfen tekrar deneyin.');
+                console.error('Error sending chat:', error);
+                addMessage('bot', 'Bağlantı veya sunucu hatası. Lütfen tekrar deneyin.');
             } finally {
                 setLoading(false);
             }
